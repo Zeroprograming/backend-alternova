@@ -68,12 +68,12 @@ MIDDLEWARE = [
     "common.middleware.RequestLoggingMiddleware",
     "common.middleware.AuditMiddleware",
     # Role-based middleware
-    "users.middleware.RoleBasedMiddleware",
-    "users.middleware.AdminOnlyMiddleware",
-    "users.middleware.TeacherOnlyMiddleware",
-    "users.middleware.StudentOnlyMiddleware",
-    "users.middleware.SecurityHeadersMiddleware",
-    "users.middleware.RateLimitMiddleware",
+    "users.infrastructure.middleware.legacy_middleware.RoleBasedMiddleware",
+    "users.infrastructure.middleware.legacy_middleware.AdminOnlyMiddleware",
+    "users.infrastructure.middleware.legacy_middleware.TeacherOnlyMiddleware",
+    "users.infrastructure.middleware.legacy_middleware.StudentOnlyMiddleware",
+    "users.infrastructure.middleware.legacy_middleware.SecurityHeadersMiddleware",
+    "users.infrastructure.middleware.legacy_middleware.RateLimitMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"

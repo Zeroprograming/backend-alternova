@@ -7,8 +7,4 @@ class SubjectsConfig(AppConfig):
 
     def ready(self):
         """Registra los signals cuando la app está lista."""
-        import subjects.signals
-
-    def ready(self):
-        """Registra los signals cuando la app está lista."""
-        import subjects.signals
+        import subjects.infrastructure.signals

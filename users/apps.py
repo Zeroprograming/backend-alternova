@@ -7,4 +7,4 @@ class UsersConfig(AppConfig):
 
     def ready(self):
         """Registra los signals cuando la app está lista."""
-        import users.signals
+        import users.infrastructure.signals

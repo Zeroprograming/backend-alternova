@@ -7,4 +7,4 @@ class NotificationsConfig(AppConfig):
 
     def ready(self):
         """Registra los signals cuando la app está lista."""
-        import notifications.signals
+        import notifications.infrastructure.signals

@@ -38,12 +38,12 @@ urlpatterns = [
     ),
     path("api/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
     # Authentication - JWT con auditoría y gestión de sesiones
-    path("api/auth/", include("users.auth_urls")),
+    path("api/auth/", include("users.presentation.urls.legacy_auth_urls")),
     # API Endpoints - Arquitectura modular
-    path("api/", include("users.urls")),
-    path("api/", include("subjects.urls")),
-    path("api/", include("notifications.urls")),
-    path("api/", include("reports.urls")),
+    path("api/", include("users.presentation.urls.legacy_urls")),
+    path("api/", include("subjects.presentation.urls.legacy_urls")),
+    path("api/", include("notifications.presentation.urls.legacy_urls")),
+    path("api/", include("reports.presentation.urls.legacy_urls")),
     # Consultas ORM Avanzadas
-    path("api/", include("common.advanced_orm_urls")),
+    path("api/", include("common.presentation.urls.advanced_orm_urls")),
 ]
