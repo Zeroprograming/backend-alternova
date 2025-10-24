@@ -1,0 +1,29 @@
+"""
+Signals para usuarios.
+"""
+
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from .models import User, UserProfile
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    """
+    Signal que crea automáticamente un perfil cuando se crea un usuario.
+    """
+    if created:
+        UserProfile.objects.get_or_create(user=instance)
+        logger.info(f"Perfil creado automáticamente para usuario: {instance.username}")
+
+
+@receiver(post_save, sender=User)
+def save_user_profile(sender, instance, **kwargs):
+    """
+    Signal que guarda el perfil cuando se guarda el usuario.
+    """
+    if hasattr(instance, "profile"):
+        instance.profile.save()
