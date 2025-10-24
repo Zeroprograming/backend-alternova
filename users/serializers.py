@@ -5,6 +5,10 @@ Nota: Los serializers deben ser simples, sin lógica compleja.
 
 from rest_framework import serializers
 from .models import User, UserProfile
+from .role_serializers import (
+    RoleAssignmentSerializer,
+    UserCreateSerializer as RoleUserCreateSerializer,
+)
 
 
 class UserProfileSerializer(serializers.ModelSerializer):

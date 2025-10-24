@@ -11,4 +11,6 @@ router.register(r"users", UserViewSet, basename="user")
 
 urlpatterns = [
     path("", include(router.urls)),
+    # URLs para gestión de roles y usuarios administrativos
+    path("", include("users.role_urls")),
 ]

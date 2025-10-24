@@ -4,7 +4,7 @@ Contiene modelos abstractos que otras apps pueden heredar.
 """
 
 from django.db import models
-from django.contrib.auth import get_user_model
+from django.conf import settings
 
 
 class TimeStampedModel(models.Model):
@@ -60,7 +60,7 @@ class AuditModel(models.Model):
     """
 
     created_by = models.ForeignKey(
-        get_user_model(),
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -68,7 +68,7 @@ class AuditModel(models.Model):
         verbose_name="Creado por",
     )
     updated_by = models.ForeignKey(
-        get_user_model(),
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

@@ -21,12 +21,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config("SECRET_KEY")
+SECRET_KEY = config("SECRET_KEY", default="django-insecure-change-this-in-production")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config("DEBUG", default=False, cast=bool)
+DEBUG = config("DEBUG", default=True, cast=bool)
 
-ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="").split(",")
+ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="localhost,127.0.0.1").split(",")
 
 
 # Application definition
@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",  # JWT Blacklist
     "drf_spectacular",  # Swagger/OpenAPI
+    "django_celery_beat",  # Celery Beat para tareas periódicas
     # Local apps - Arquitectura modular
     "common",  # Utilidades comunes, modelos base, permisos, decoradores, auditoría
     "users",  # Gestión de usuarios
@@ -58,9 +59,21 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    # Custom middleware
+    # Custom middleware - Decoradores y Middleware (10 puntos)
+    "common.advanced_middleware.UserRequestLoggingMiddleware",  # Registro usuario y duración
+    "common.advanced_middleware.IPBlockingMiddleware",  # Bloqueo IPs externas
+    "common.advanced_middleware.GlobalErrorLoggingMiddleware",  # Errores globales
+    "common.advanced_middleware.PerformanceMonitoringMiddleware",  # Monitoreo rendimiento
+    # Middleware existente
     "common.middleware.RequestLoggingMiddleware",
     "common.middleware.AuditMiddleware",
+    # Role-based middleware
+    "users.middleware.RoleBasedMiddleware",
+    "users.middleware.AdminOnlyMiddleware",
+    "users.middleware.TeacherOnlyMiddleware",
+    "users.middleware.StudentOnlyMiddleware",
+    "users.middleware.SecurityHeadersMiddleware",
+    "users.middleware.RateLimitMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -88,12 +101,12 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": config("DB_ENGINE"),
-        "NAME": config("DB_NAME"),
-        "USER": config("DB_USER"),
-        "PASSWORD": config("DB_PASSWORD"),
-        "HOST": config("DB_HOST"),
-        "PORT": config("DB_PORT"),
+        "ENGINE": config("DB_ENGINE", default="django.db.backends.postgresql"),
+        "NAME": config("DB_NAME", default="postgres"),
+        "USER": config("DB_USER", default="postgres"),
+        "PASSWORD": config("DB_PASSWORD", default="postgres"),
+        "HOST": config("DB_HOST", default="localhost"),
+        "PORT": config("DB_PORT", default="5432"),
     }
 }
 
@@ -266,3 +279,73 @@ SIMPLE_JWT = {
     "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
     "TOKEN_TYPE_CLAIM": "token_type",
 }
+
+# ========== CONFIGURACIONES PARA DECORADORES Y MIDDLEWARE (10 puntos) ==========
+
+# Configuración para IP Blocking Middleware
+ENABLE_IP_BLOCKING = config("ENABLE_IP_BLOCKING", default=False, cast=bool)
+ALLOWED_IPS = config(
+    "ALLOWED_IPS",
+    default="",
+    cast=lambda v: [ip.strip() for ip in v.split(",") if ip.strip()],
+)
+BLOCKED_IPS = config(
+    "BLOCKED_IPS",
+    default="",
+    cast=lambda v: [ip.strip() for ip in v.split(",") if ip.strip()],
+)
+
+# Configuración para Performance Monitoring Middleware
+SLOW_REQUEST_THRESHOLD = config("SLOW_REQUEST_THRESHOLD", default=2.0, cast=float)
+
+# Configuración para User Request Logging Middleware
+ENABLE_DETAILED_REQUEST_LOGGING = config(
+    "ENABLE_DETAILED_REQUEST_LOGGING", default=True, cast=bool
+)
+
+# ========== CONFIGURACIÓN DE EMAIL (5 puntos) ==========
+
+# Configuración de email para notificaciones
+EMAIL_BACKEND = config(
+    "EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend"
+)
+EMAIL_HOST = config("EMAIL_HOST", default="smtp.gmail.com")
+EMAIL_PORT = config("EMAIL_PORT", default=587, cast=int)
+EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=True, cast=bool)
+EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
+DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="noreply@example.com")
+
+# Configuración adicional para emails
+EMAIL_TIMEOUT = 30
+EMAIL_USE_SSL = False
+
+# ========== CONFIGURACIÓN DE CELERY + BEAT (5 puntos) ==========
+
+# Configuración de Celery
+CELERY_BROKER_URL = config("CELERY_BROKER_URL", default="redis://localhost:6379/0")
+CELERY_RESULT_BACKEND = config(
+    "CELERY_RESULT_BACKEND", default="redis://localhost:6379/0"
+)
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_ENABLE_UTC = True
+
+# Configuración de Celery Beat
+CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
+
+# Configuración de tareas
+CELERY_TASK_ALWAYS_EAGER = config("CELERY_TASK_ALWAYS_EAGER", default=False, cast=bool)
+CELERY_TASK_EAGER_PROPAGATES = True
+CELERY_TASK_SOFT_TIME_LIMIT = 60
+CELERY_TASK_TIME_LIMIT = 120
+
+# Configuración de workers
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1
+CELERY_WORKER_MAX_TASKS_PER_CHILD = 1000
+
+# Configuración de logging
+CELERY_TASK_LOG_FORMAT = "[%(asctime)s: %(levelname)s/%(processName)s] %(message)s"
+CELERY_WORKER_LOG_FORMAT = "[%(asctime)s: %(levelname)s/%(processName)s] %(message)s"

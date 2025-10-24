@@ -134,3 +134,63 @@ class NotificationViewSet(viewsets.ModelViewSet):
         """Obtiene el conteo de notificaciones no leídas."""
         count = NotificationService.get_unread_count(request.user)
         return Response({"unread_count": count})
+
+    @extend_schema(
+        summary="Enviar notificación de prueba",
+        description="Envía una notificación de prueba por email (requiere JWT)",
+        tags=["Notificaciones"],
+        request={
+            "application/json": {
+                "type": "object",
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "description": "Título de la notificación",
+                    },
+                    "message": {
+                        "type": "string",
+                        "description": "Mensaje de la notificación",
+                    },
+                    "notification_type": {
+                        "type": "string",
+                        "enum": ["info", "warning", "success", "error"],
+                        "default": "info",
+                    },
+                },
+                "required": ["title", "message"],
+            }
+        },
+    )
+    @action(detail=False, methods=["post"])
+    def send_test_notification(self, request):
+        """Envía una notificación de prueba al usuario actual."""
+        try:
+            title = request.data.get("title", "Notificación de prueba")
+            message = request.data.get(
+                "message", "Esta es una notificación de prueba del sistema."
+            )
+            notification_type = request.data.get("notification_type", "info")
+
+            notification = NotificationService.create_notification(
+                user=request.user,
+                title=title,
+                message=message,
+                notification_type=notification_type,
+                send_email=True,
+            )
+
+            serializer = NotificationSerializer(notification)
+            return Response(
+                {
+                    "message": "Notificación de prueba enviada exitosamente",
+                    "notification": serializer.data,
+                },
+                status=status.HTTP_201_CREATED,
+            )
+
+        except Exception as e:
+            logger.error(f"Error enviando notificación de prueba: {str(e)}")
+            return Response(
+                {"error": "Error enviando notificación de prueba"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )

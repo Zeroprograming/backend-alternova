@@ -13,6 +13,12 @@ from .models import Subject, Enrollment
 from .serializers import SubjectSerializer, EnrollmentSerializer
 from .services import SubjectService
 from .permissions import IsTeacherOfSubject
+from common.decorators import (
+    validate_prerequisites,
+    validate_credits_limit,
+    validate_grade_range,
+    log_action,
+)
 import logging
 
 logger = logging.getLogger(__name__)
@@ -213,6 +219,9 @@ class SubjectViewSet(viewsets.ModelViewSet):
         tags=["Materias"],
     )
     @action(detail=True, methods=["post"])
+    @validate_prerequisites
+    @validate_credits_limit
+    @log_action("student_enrollment", "Estudiante se inscribió en materia")
     def enroll(self, request, pk=None):
         """Enrutar a service para inscribir estudiante."""
         subject = self.get_object()
@@ -242,6 +251,8 @@ class SubjectViewSet(viewsets.ModelViewSet):
         },
     )
     @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated])
+    @validate_grade_range
+    @log_action("grade_assignment", "Profesor asignó calificación")
     def assign_grade(self, request, pk=None):
         """Enrutar a service para asignar nota."""
         subject = self.get_object()

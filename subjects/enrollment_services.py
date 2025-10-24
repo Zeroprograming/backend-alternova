@@ -19,7 +19,7 @@ class EnrollmentService:
     @transaction.atomic
     def create_enrollment(student, subject, requesting_user):
         """
-        Crea una nueva inscripción.
+        Crea una nueva inscripción con validaciones académicas completas.
 
         Args:
             student: Estudiante a inscribir
@@ -31,43 +31,14 @@ class EnrollmentService:
 
         Raises:
             PermissionError: Si no tiene permisos
-            ValueError: Si ya está inscrito o materia no disponible
+            ValueError: Si no puede inscribirse por reglas académicas
         """
-        # Solo el estudiante puede inscribirse a sí mismo, o admin puede inscribir a cualquiera
-        if student != requesting_user and not requesting_user.is_staff:
-            raise PermissionError("Solo puedes inscribirte a ti mismo")
+        from .academic_services import AcademicService
 
-        # Verificar que el estudiante existe y está activo
-        if not student.is_active or not student.is_student:
-            raise ValueError("Estudiante no válido")
-
-        # Verificar que la materia existe y está activa
-        if not subject.is_active:
-            raise ValueError("Materia no disponible")
-
-        # Verificar que no esté ya inscrito
-        existing = Enrollment.objects.filter(
-            student=student, subject=subject, is_active=True
-        ).exists()
-        if existing:
-            raise ValueError("Ya estás inscrito en esta materia")
-
-        # Crear inscripción
-        enrollment = Enrollment.objects.create(
-            student=student,
-            subject=subject,
-            created_by=requesting_user,
-            updated_by=requesting_user,
+        # Usar el servicio académico para validaciones completas
+        return AcademicService.enroll_student_with_validation(
+            student, subject, requesting_user
         )
-
-        # Log de auditoría
-        AuditService.log_enrollment(student, subject)
-
-        logger.info(
-            f"Estudiante {student.username} inscrito en {subject.code} por {requesting_user.username}"
-        )
-
-        return enrollment
 
     @staticmethod
     def list_enrollments(requesting_user, subject_id=None, student_id=None):

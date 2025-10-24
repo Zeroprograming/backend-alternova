@@ -44,4 +44,6 @@ urlpatterns = [
     path("api/", include("subjects.urls")),
     path("api/", include("notifications.urls")),
     path("api/", include("reports.urls")),
+    # Consultas ORM Avanzadas
+    path("api/", include("common.advanced_orm_urls")),
 ]

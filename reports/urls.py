@@ -9,4 +9,6 @@ router.register(r"reports", ReportViewSet)
 
 urlpatterns = [
     path("", include(router.urls)),
+    # URLs para reportes CSV
+    path("", include("reports.csv_urls")),
 ]

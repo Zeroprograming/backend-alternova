@@ -3,6 +3,7 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from common.models import BaseModel
+from common.managers import ReportManager
 
 User = get_user_model()
 
@@ -46,6 +47,9 @@ class Report(BaseModel):
     completed_at = models.DateTimeField(
         null=True, blank=True, verbose_name="Completado el"
     )
+
+    # Manager personalizado
+    objects = ReportManager()
 
     class Meta:
         verbose_name = "Reporte"

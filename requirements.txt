@@ -5,4 +5,11 @@ psycopg2-binary==2.9.11
 python-decouple==3.8
 drf-spectacular==0.28.0
 PyJWT==2.10.1
+Pillow==10.4.0
+
+# ========== CELERY + BEAT (5 puntos) ==========
+celery==5.5.3
+django-celery-beat==2.8.1
+redis==7.0.0
+kombu==5.5.4
 

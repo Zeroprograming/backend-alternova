@@ -3,6 +3,7 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from common.models import BaseModel
+from common.managers import NotificationManager
 
 User = get_user_model()
 
@@ -30,6 +31,9 @@ class Notification(BaseModel):
     )
     is_read = models.BooleanField(default=False, verbose_name="Leída")
     read_at = models.DateTimeField(null=True, blank=True, verbose_name="Leída el")
+
+    # Manager personalizado
+    objects = NotificationManager()
 
     class Meta:
         verbose_name = "Notificación"

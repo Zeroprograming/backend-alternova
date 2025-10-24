@@ -63,55 +63,26 @@ class SubjectService:
     @transaction.atomic
     def assign_grade(enrollment, grade, requesting_user):
         """
-        Asigna una nota final a una inscripción.
+        Asigna nota a una inscripción con validaciones académicas.
 
         Args:
-            enrollment: Inscripción
-            grade: Nota (0-5)
+            enrollment: Inscripción a calificar
+            grade: Nota a asignar
             requesting_user: Usuario que asigna la nota
 
         Returns:
             Enrollment: Inscripción actualizada
 
         Raises:
-            ValueError: Si la nota es inválida
             PermissionError: Si no tiene permisos
+            ValueError: Si la nota no es válida
         """
-        # Solo el profesor de la materia o admin pueden asignar notas
-        if (
-            not requesting_user.is_staff
-            and enrollment.subject.teacher != requesting_user
-        ):
-            raise PermissionError("Solo el profesor de la materia puede asignar notas")
+        from .academic_services import AcademicService
 
-        if grade < 0 or grade > 5:
-            raise ValueError("La nota debe estar entre 0 y 5")
-
-        # Guardar nota anterior para auditoría
-        old_grade = enrollment.final_grade
-
-        enrollment.final_grade = grade
-        enrollment.updated_by = requesting_user
-        enrollment.save()
-
-        logger.info(
-            f"Nota {grade} asignada a {enrollment} por {requesting_user.username}"
+        # Usar el servicio académico para validaciones completas
+        return AcademicService.assign_grade_with_validation(
+            enrollment, grade, requesting_user
         )
-
-        # Registrar en auditoría
-        from common.audit_services import AuditService
-
-        AuditService.log_grade_change(requesting_user, enrollment, old_grade, grade)
-
-        # Notificar al estudiante
-        # from notifications.services import NotificationService
-        # NotificationService.create_notification(
-        #     enrollment.student,
-        #     "Nueva calificación",
-        #     f"Has recibido {grade} en {enrollment.subject.name}"
-        # )
-
-        return enrollment
 
     @staticmethod
     def get_student_subjects(student):

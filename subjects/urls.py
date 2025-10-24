@@ -10,4 +10,6 @@ router.register(r"enrollments", EnrollmentViewSet)
 
 urlpatterns = [
     path("", include(router.urls)),
+    # URLs académicas
+    path("academic/", include("subjects.academic_urls")),
 ]

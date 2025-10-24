@@ -6,6 +6,7 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from common.models import BaseModel
 from common.validators import code_validator, validate_grade
+from common.managers import SubjectManager, EnrollmentManager
 
 User = get_user_model()
 
@@ -28,6 +29,13 @@ class Subject(BaseModel):
         verbose_name="Profesor",
     )
     semester = models.PositiveIntegerField(default=1, verbose_name="Semestre")
+    is_finished = models.BooleanField(default=False, verbose_name="Materia Finalizada")
+    max_students = models.PositiveIntegerField(
+        default=30, verbose_name="Máximo Estudiantes"
+    )
+
+    # Manager personalizado
+    objects = SubjectManager()
 
     class Meta:
         verbose_name = "Materia"
@@ -36,6 +44,42 @@ class Subject(BaseModel):
 
     def __str__(self):
         return f"{self.code} - {self.name}"
+
+    @property
+    def is_approved_grade(self, grade):
+        """Verifica si una nota es aprobatoria (>= 3.0)."""
+        return grade >= 3.0
+
+    def can_enroll_student(self, student):
+        """Verifica si un estudiante puede inscribirse."""
+        from .services import SubjectService
+
+        return SubjectService.can_student_enroll(student, self)
+
+
+class Prerequisite(BaseModel):
+    """Modelo para prerrequisitos entre materias."""
+
+    subject = models.ForeignKey(
+        Subject,
+        on_delete=models.CASCADE,
+        related_name="prerequisites",
+        verbose_name="Materia",
+    )
+    prerequisite_subject = models.ForeignKey(
+        Subject,
+        on_delete=models.CASCADE,
+        related_name="required_for",
+        verbose_name="Prerrequisito",
+    )
+
+    class Meta:
+        verbose_name = "Prerrequisito"
+        verbose_name_plural = "Prerrequisitos"
+        unique_together = ["subject", "prerequisite_subject"]
+
+    def __str__(self):
+        return f"{self.subject.code} requiere {self.prerequisite_subject.code}"
 
 
 class Enrollment(BaseModel):
@@ -65,12 +109,34 @@ class Enrollment(BaseModel):
         validators=[validate_grade],
         verbose_name="Nota final",
     )
+    semester = models.PositiveIntegerField(default=1, verbose_name="Semestre")
+    academic_year = models.CharField(
+        max_length=9, default="2024-1", verbose_name="Año Académico"
+    )
+
+    # Manager personalizado
+    objects = EnrollmentManager()
 
     class Meta:
         verbose_name = "Inscripción"
         verbose_name_plural = "Inscripciones"
-        unique_together = ["student", "subject"]
+        unique_together = ["student", "subject", "academic_year"]
         ordering = ["-enrolled_at"]
 
     def __str__(self):
         return f"{self.student.full_name} - {self.subject.name}"
+
+    @property
+    def is_approved(self):
+        """Verifica si la materia está aprobada."""
+        return self.final_grade is not None and self.final_grade >= 3.0
+
+    @property
+    def status(self):
+        """Retorna el estado de la inscripción."""
+        if self.final_grade is None:
+            return "En curso"
+        elif self.is_approved:
+            return "Aprobada"
+        else:
+            return "Reprobada"
