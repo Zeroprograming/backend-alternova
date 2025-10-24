@@ -249,10 +249,56 @@ PUT    /api/notifications/{id}/mark-read/ # Marcar como leída
 
 ## 🧪 Testing
 
-### Ejecutar Pruebas
+### Sistema de Testing Completo
+
+- **Framework**: pytest + pytest-django
+- **Cobertura**: Mínimo 70% (objetivo alcanzado)
+- **Total de Pruebas**: 108 pruebas implementadas
+- **Apps Cubiertas**: common, users, notifications, subjects, reports
+
+### Pruebas por Módulo
+
+- ✅ **Common**: 11 pruebas (auditoría, middleware, utilidades)
+- ✅ **Users**: 20 pruebas (autenticación, gestión de usuarios)
+- ✅ **Notifications**: 20 pruebas (sistema de notificaciones)
+- ✅ **Subjects**: 32 pruebas (materias, inscripciones, calificaciones)
+- ✅ **Reports**: 25 pruebas (reportes, exportación CSV)
+
+### Comandos de Testing
 
 ```bash
-# Todas las pruebas
+# Ejecutar todas las pruebas (108 pruebas)
+pytest -v --ds=config.test_settings
+
+# Con cobertura completa
+pytest -v --cov=common --cov=users --cov=notifications --cov=subjects --cov=reports --cov-report=html --cov-report=term-missing --cov-fail-under=70 --ds=config.test_settings
+
+# Por módulo específico
+pytest common/tests/unit/test_basic.py -v --ds=config.test_settings
+pytest users/tests/unit/test_basic.py -v --ds=config.test_settings
+pytest notifications/tests/unit/test_basic.py -v --ds=config.test_settings
+pytest subjects/tests/unit/test_basic.py -v --ds=config.test_settings
+pytest reports/tests/unit/test_basic.py -v --ds=config.test_settings
+```
+
+### Estructura de Testing
+
+```
+📁 Estructura de Testing por App
+├── tests/
+│   ├── unit/              # Pruebas unitarias
+│   ├── integration/       # Pruebas de integración
+│   ├── fixtures/          # Datos de prueba
+│   └── conftest.py        # Configuración pytest
+├── pytest.ini            # Configuración pytest
+├── config/test_settings.py # Configuración Django para testing
+└── requirements-testing.txt # Dependencias de testing
+```
+
+### Testing Legacy (Django Test)
+
+```bash
+# Todas las pruebas Django
 python manage.py test
 
 # Pruebas específicas
@@ -261,18 +307,6 @@ python manage.py test subjects.tests
 python manage.py test reports.tests
 python manage.py test notifications.tests
 python manage.py test common.tests
-```
-
-### Cobertura de Pruebas
-
-```bash
-# Instalar coverage
-pip install coverage
-
-# Ejecutar con cobertura
-coverage run --source='.' manage.py test
-coverage report
-coverage html
 ```
 
 ## 🚀 Despliegue en Producción

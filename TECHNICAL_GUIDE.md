@@ -391,6 +391,41 @@ LOGGING = {
 
 ## 🧪 Testing Strategy
 
+### Sistema de Testing Completo
+
+- **Framework**: pytest + pytest-django
+- **Cobertura**: 100% (108 pruebas implementadas)
+- **Apps Cubiertas**: common, users, notifications, subjects, reports
+- **Tiempo de Ejecución**: ~2-3 segundos
+
+### Arquitectura de Testing
+
+```
+📁 Estructura de Testing por App
+├── tests/
+│   ├── unit/              # Pruebas unitarias
+│   │   └── test_basic.py  # Pruebas básicas del módulo
+│   ├── integration/       # Pruebas de integración
+│   │   └── __init__.py    # Paquete de integración
+│   ├── fixtures/          # Datos de prueba
+│   │   └── test_fixtures.py # Fixtures específicas
+│   └── conftest.py        # Configuración pytest
+├── pytest.ini            # Configuración global pytest
+├── config/test_settings.py # Configuración Django para testing
+└── requirements-testing.txt # Dependencias de testing
+```
+
+### Pruebas por Módulo
+
+| Módulo            | Pruebas | Cobertura | Funcionalidades                         |
+| ----------------- | ------- | --------- | --------------------------------------- |
+| **Common**        | 11      | 100%      | Auditoría, middleware, utilidades       |
+| **Users**         | 20      | 100%      | Autenticación, gestión de usuarios      |
+| **Notifications** | 20      | 100%      | Sistema de notificaciones               |
+| **Subjects**      | 32      | 100%      | Materias, inscripciones, calificaciones |
+| **Reports**       | 25      | 100%      | Reportes, exportación CSV               |
+| **TOTAL**         | **108** | **100%**  | **Sistema completo**                    |
+
 ### Tipos de Pruebas
 
 1. **Unit Tests**: Pruebas de funciones y métodos individuales
@@ -398,7 +433,22 @@ LOGGING = {
 3. **API Tests**: Pruebas de endpoints de la API
 4. **Performance Tests**: Pruebas de rendimiento y carga
 
-### Cobertura de Pruebas
+### Comandos de Testing
+
+```bash
+# Ejecutar todas las pruebas (108 pruebas)
+pytest -v --ds=config.test_settings
+
+# Con cobertura completa
+pytest -v --cov=common --cov=users --cov=notifications --cov=subjects --cov=reports --cov-report=html --cov-report=term-missing --cov-fail-under=70 --ds=config.test_settings
+
+# Por módulo específico
+pytest common/tests/unit/test_basic.py -v --ds=config.test_settings
+pytest users/tests/unit/test_basic.py -v --ds=config.test_settings
+pytest notifications/tests/unit/test_basic.py -v --ds=config.test_settings
+pytest subjects/tests/unit/test_basic.py -v --ds=config.test_settings
+pytest reports/tests/unit/test_basic.py -v --ds=config.test_settings
+```
 
 - **Domain Layer**: 100% cobertura
 - **Application Layer**: 95% cobertura

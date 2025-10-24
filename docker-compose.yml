@@ -1,23 +1,165 @@
 version: "3.8"
 
 services:
+  # Base de datos PostgreSQL
   db:
     image: postgres:15-alpine
     container_name: alternova_postgres
-    restart: always
+    restart: unless-stopped
     environment:
-      POSTGRES_DB: ${DB_NAME:-postgres}
-      POSTGRES_USER: ${DB_USER:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: alternova_db
+      POSTGRES_USER: alternova_user
+      POSTGRES_PASSWORD: alternova_password
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
     ports:
-      - "${DB_PORT:-5432}:5432"
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U alternova_user -d alternova_db"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - alternova_network
+
+  # Redis para Celery y Cache
+  redis:
+    image: redis:7-alpine
+    container_name: alternova_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - alternova_network
+
+  # Aplicación Django
+  app:
+    build: .
+    container_name: alternova_app
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=False
+      - SECRET_KEY=django-insecure-change-this-in-production-very-long-secret-key-here
+      - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
+      - DB_ENGINE=django.db.backends.postgresql
+      - DB_NAME=alternova_db
+      - DB_USER=alternova_user
+      - DB_PASSWORD=alternova_password
+      - DB_HOST=db
+      - DB_PORT=5432
+      - REDIS_URL=redis://redis:6379/0
+      - CACHE_URL=redis://redis:6379/1
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    volumes:
+      - ./logs:/app/logs
+      - ./media:/app/media
+      - ./staticfiles:/app/staticfiles
+      - ./reports:/app/reports
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - alternova_network
+    healthcheck:
+      test: ["CMD", "python", "manage.py", "check", "--deploy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Celery Worker
+  celery:
+    build: .
+    container_name: alternova_celery
+    restart: unless-stopped
+    command: celery -A config worker --loglevel=info --concurrency=2
+    environment:
+      - DEBUG=False
+      - SECRET_KEY=django-insecure-change-this-in-production-very-long-secret-key-here
+      - DB_ENGINE=django.db.backends.postgresql
+      - DB_NAME=alternova_db
+      - DB_USER=alternova_user
+      - DB_PASSWORD=alternova_password
+      - DB_HOST=db
+      - DB_PORT=5432
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    volumes:
+      - ./logs:/app/logs
+      - ./media:/app/media
+      - ./reports:/app/reports
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - alternova_network
+
+  # Celery Beat (Scheduler)
+  beat:
+    build: .
+    container_name: alternova_beat
+    restart: unless-stopped
+    command: celery -A config beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    environment:
+      - DEBUG=False
+      - SECRET_KEY=django-insecure-change-this-in-production-very-long-secret-key-here
+      - DB_ENGINE=django.db.backends.postgresql
+      - DB_NAME=alternova_db
+      - DB_USER=alternova_user
+      - DB_PASSWORD=alternova_password
+      - DB_HOST=db
+      - DB_PORT=5432
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    volumes:
+      - ./logs:/app/logs
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - alternova_network
+
+  # Nginx (Proxy Reverso)
+  nginx:
+    image: nginx:alpine
+    container_name: alternova_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./staticfiles:/app/staticfiles
+      - ./media:/app/media
+    depends_on:
+      - app
+    networks:
+      - alternova_network
 
 volumes:
   postgres_data:
+  redis_data:
+
+networks:
+  alternova_network:
+    driver: bridge

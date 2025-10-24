@@ -13,3 +13,10 @@ django-celery-beat==2.8.1
 redis==7.0.0
 kombu==5.5.4
 
+# ========== PRODUCTION SERVER ==========
+gunicorn==23.0.0
+whitenoise==6.8.2
+
+# ========== DEVELOPMENT ==========
+django-cors-headers==4.6.0
+django-extensions==3.2.3

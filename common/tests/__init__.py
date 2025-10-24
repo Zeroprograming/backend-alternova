@@ -1,1 +1,1 @@
-# Clean Architecture - Tests Layer
+# Inicialización del paquete de pruebas para Common App

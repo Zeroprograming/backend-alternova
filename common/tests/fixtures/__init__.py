@@ -1,1 +1,1 @@
-# Tests Layer - Fixtures
+# Inicialización del paquete de fixtures

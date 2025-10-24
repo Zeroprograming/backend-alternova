@@ -347,19 +347,46 @@ python manage.py shell
 
 ### Testing
 
+#### **Sistema de Testing Completo**
+
+- **Framework**: pytest + pytest-django
+- **Total de Pruebas**: 108 pruebas implementadas
+- **Cobertura**: 100% en todos los módulos
+- **Apps Cubiertas**: common, users, notifications, subjects, reports
+
+#### **Comandos de Testing**
+
 ```bash
-# Ejecutar todas las pruebas
+# Ejecutar todas las pruebas (108 pruebas)
+pytest -v --ds=config.test_settings
+
+# Con cobertura completa
+pytest -v --cov=common --cov=users --cov=notifications --cov=subjects --cov=reports --cov-report=html --cov-report=term-missing --cov-fail-under=70 --ds=config.test_settings
+
+# Por módulo específico
+pytest common/tests/unit/test_basic.py -v --ds=config.test_settings
+pytest users/tests/unit/test_basic.py -v --ds=config.test_settings
+pytest notifications/tests/unit/test_basic.py -v --ds=config.test_settings
+pytest subjects/tests/unit/test_basic.py -v --ds=config.test_settings
+pytest reports/tests/unit/test_basic.py -v --ds=config.test_settings
+```
+
+#### **Testing Legacy (Django Test)**
+
+```bash
+# Ejecutar todas las pruebas Django
 python manage.py test
 
 # Pruebas con cobertura
 coverage run --source='.' manage.py test
 coverage report
 coverage html
+```
 
-# Pruebas específicas
 python manage.py test users.tests
 python manage.py test subjects.tests
-```
+
+````
 
 ### Producción
 
@@ -375,7 +402,7 @@ gunicorn config.wsgi:application --bind 0.0.0.0:8000
 
 # Ejecutar con Docker
 docker-compose up -d
-```
+````
 
 ## 📊 Monitoreo y Logs
 

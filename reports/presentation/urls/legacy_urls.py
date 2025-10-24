@@ -10,5 +10,5 @@ router.register(r"reports", ReportViewSet)
 urlpatterns = [
     path("", include(router.urls)),
     # URLs para reportes CSV
-    path("", include("reports.presentation.urls.legacy_csv_urls")),
+    path("csv/", include("reports.presentation.urls.legacy_csv_urls")),
 ]

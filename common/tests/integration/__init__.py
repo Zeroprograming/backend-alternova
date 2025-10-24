@@ -1,1 +1,1 @@
-# Tests Layer - Integration Tests
+# Inicialización del paquete de pruebas de integración
