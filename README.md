@@ -429,7 +429,7 @@ python manage.py loaddata backup.json
 
 - **Nombre**: Johan Jiménez
 - **Email**: johanjimenez0210@gmail.com
-- **GitHub**: [@tu-usuario](https://github.com/tu-usuario)
+- **GitHub**: [@Zeroprograming](https://github.com/Zeroprograming)
 
 ### Reportar Issues
 
